@@ -1,5 +1,5 @@
 {
-  "name": "mfx-ds-bot",
+  "name": "@maofuxing/mfx-ds-bot",
   "version": "0.2.4",
   "description": "Maofuxing agent teams with native navigation, persistent Bots, direct messages and group chats",
   "keywords": [
@@ -65,5 +65,9 @@
   },
   "devDependencies": {
     "esbuild": "0.28.2"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   }
 }

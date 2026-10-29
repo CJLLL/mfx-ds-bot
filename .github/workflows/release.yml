@@ -1,6 +1,6 @@
 name: Release plugin
 
-# Configure npm Trusted Publishing for mfx-ds-bot, CJLLL/mfx-ds-bot,
+# Configure npm Trusted Publishing for @maofuxing/mfx-ds-bot, CJLLL/mfx-ds-bot,
 # workflow release.yml before publishing a new version through Actions.
 # This fork publishes the plugin only.
 on:
@@ -58,7 +58,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: mfx-ds-bot-package
-          path: ds-bot/mfx-ds-bot-*.tgz
+          path: ds-bot/maofuxing-mfx-ds-bot-*.tgz
           if-no-files-found: error
       - name: Publish or verify existing release
         if: github.event_name == 'release' || (!inputs.dry_run && github.ref == 'refs/heads/main')
@@ -68,7 +68,7 @@ jobs:
           import { execFileSync } from 'node:child_process'
           const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
           const [packed] = JSON.parse(readFileSync('pack-result.json', 'utf8'))
-          const response = await fetch(`https://registry.npmjs.org/${pkg.name}/${pkg.version}`)
+          const response = await fetch(`https://registry.npmjs.org/${encodeURIComponent(pkg.name)}/${pkg.version}`)
           if (response.ok) {
             const published = await response.json()
             if (published.dist?.integrity !== packed.integrity) throw new Error('Published version has different contents; bump the version')

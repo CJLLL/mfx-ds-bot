@@ -1,10 +1,10 @@
 # mfx-ds-bot
 
-A Maofuxing integration fork of [DS Bot](https://github.com/Fei2411/DS-Bot), retaining its Apache-2.0 license and notices. The npm package is **mfx-ds-bot**; its source remains in `ds-bot/`.
+A Maofuxing integration fork of [DS Bot](https://github.com/Fei2411/DS-Bot), retaining its Apache-2.0 license and notices. The npm package is **@maofuxing/mfx-ds-bot**; its source remains in `ds-bot/`.
 
-In a Maofuxing client with the conversation navigation integration, install `mfx-ds-bot@0.2.4` from **Plugins → Add plugin** using the official npm registry, then fully restart the client. The **智能体** entry appears in the upper sidebar. Market search requires the selected catalog to have indexed this package; npm publication alone does not add a search result. The 1024Store submission is maintained separately.
+In a Maofuxing client with the conversation navigation integration, install `@maofuxing/mfx-ds-bot@0.2.4` from **Plugins → Add plugin** using the official npm registry, then fully restart the client. The **智能体** entry appears in the upper sidebar. Market search requires the selected catalog to have indexed this package; npm publication alone does not add a search result. Public catalog submission is currently deferred.
 
-If `ds-bot` is already installed, remove that plugin while keeping its data, restart, then install this package. Both use the same Bot data directory and plugin row IDs; do not enable them together. Preserve any custom data-directory override and change explicit module overrides from `ds-bot` to `mfx-ds-bot`.
+If `ds-bot` is already installed, remove that plugin while keeping its data, restart, then install this package. Both use the same Bot data directory and plugin row IDs; do not enable them together. Preserve any custom data-directory override and change explicit module overrides from `ds-bot` to `@maofuxing/mfx-ds-bot`.
 
 This fork publishes the plugin only. The independent desktop app and installation instructions below belong to the upstream project.
 

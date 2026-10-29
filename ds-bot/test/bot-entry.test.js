@@ -161,7 +161,7 @@ test('the menu label follows the shell language without re-registering the entry
 
 test('the independently published package exports its display name in both languages', () => {
   const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
-  assert.equal(manifest.name, 'mfx-ds-bot')
+  assert.equal(manifest.name, '@maofuxing/mfx-ds-bot')
   assert.ok(manifest.files.includes('locale/'))
   for (const language of ['en', 'zh']) {
     const resource = new URL(import.meta.resolve(`${manifest.name}/locale/${language}.json`))
