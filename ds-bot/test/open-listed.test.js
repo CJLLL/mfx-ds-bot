@@ -73,3 +73,15 @@ test('a navigation elsewhere drops the wait', () => {
   list.set('a')
   assert.deepEqual(opened, [])
 })
+
+test('leaving Bot mode cancels a wait even when the selected session has not changed', () => {
+  const list = store(['chief'])
+  list.setMain('chief')
+  const { show, opened } = rig(list)
+  show('fresh-part')
+  show.cancel()
+  list.set('fresh-part')
+  assert.deepEqual(opened, [])
+  show('chief')
+  assert.deepEqual(opened, ['chief'])
+})

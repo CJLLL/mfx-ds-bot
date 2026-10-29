@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { FishLogo } from './dsh-primitives.js'
 import { isMainOf } from './sources.js'
 import { currentPart, previewOf, relativeShort } from './text.js'
-import { PlusIcon, SearchIcon, SidebarIcon, GaugeIcon, ClockIcon, GearIcon, PinMarkIcon, ConnectorIcon, SwitchIcon, CloudDownloadIcon, SignOutIcon } from './icons.js'
+import { PlusIcon, SearchIcon, SidebarIcon, GaugeIcon, ClockIcon, GearIcon, PinMarkIcon, ConnectorIcon, SwitchIcon, CloudDownloadIcon, SignOutIcon, ChevronLeftIcon } from './icons.js'
 import { MAIN_LOOK } from './characters.js'
 import { botState, BotMark, BotAvatar, RoomAvatar } from './mark.js'
 import { reducedMotion } from './activity-row.js'
@@ -43,7 +43,7 @@ const waitingFor = (roster, waits) => {
   return names.length === 0 ? '' : t('Waiting for {names}', { names: names.join(t(' and ')) })
 }
 
-function BotRow({ bot, roster, actions, useSessions, useSessionStatus, useSessionRetainInfo, useActivity, useWork, wide, marked }) {
+function BotRow({ bot, roster, actions, useSessions, useSessionStatus, useSessionRetainInfo, useActivity, useWork, wide, marked, integrated = false }) {
   const id = bot.id
   const part = currentPart(bot)
   const preview = useSessions(list => previewOf(list, part, roster.exchangeTurns[part]))
@@ -72,7 +72,7 @@ function BotRow({ bot, roster, actions, useSessions, useSessionStatus, useSessio
   }
   const pinned = bot.pinned === true && !tile
   const label = [bot.name, main ? t('Main Bot') : '', pinned ? t('Pinned') : '', running || away ? t('Working') : '', waitsFor, approval ? t('Waiting for your approval') : alert ? t('Waiting for your answer') : '', unread ? t('Unread activity') : ''].filter(Boolean).join(', ')
-  if (tile && wide) {
+  if (tile && wide && !integrated) {
     return h('div', { className: 'bt-tile-wrap' }, h('button', {
       type: 'button', className: 'bt-tile', 'aria-label': label, 'aria-current': active ? 'page' : undefined,
       'data-bot-id': id, title: preview || bot.name, onClick: () => actions.openSession(id), onContextMenu,
@@ -85,18 +85,20 @@ function BotRow({ bot, roster, actions, useSessions, useSessionStatus, useSessio
     type: 'button', className: 'bt-row', 'aria-label': label, 'aria-current': active ? 'page' : undefined,
     'data-bot-id': id, title: wide ? undefined : bot.name, onClick: () => actions.openSession(id), onContextMenu,
   },
-  h(BotAvatar, { bot, size: 36, state, main }),
+  h(BotAvatar, { bot, size: integrated ? 28 : 36, state, main: main && !integrated }),
   pinned && !wide ? h(PinMark) : null,
   wide ? h('span', { className: 'bt-row-body' },
-    h('span', { className: 'bt-row-name' }, h('span', { className: 'bt-row-title' }, bot.name), pinned ? h(PinMark) : null),
+    h('span', { className: 'bt-row-name' }, h('span', { className: 'bt-row-title' }, bot.name), pinned ? h(PinMark) : null,
+      integrated && main ? h('span', { className: 'bt-native-main' }, t('Lead agent')) : null),
     runningLine ? h('span', { className: 'bt-row-preview' }, runningLine)
       : awayLine ? h('span', { className: 'bt-row-preview' }, awayLine)
         : waitsFor ? h('span', { className: 'bt-row-preview' }, waitsFor)
-          : preview ? h('span', { className: 'bt-row-preview' }, preview) : null) : null,
+          : integrated && main && bot.role ? h('span', { className: 'bt-row-preview' }, bot.role)
+            : preview ? h('span', { className: 'bt-row-preview' }, preview) : null) : null,
   wide && unread && !active ? h('span', { className: 'bt-unread', 'aria-hidden': true }) : null)
 }
 
-function RoomRow({ room, roster, actions, useSessions, useSessionStatus, useSessionRetainInfo, useWork, wide, marked }) {
+function RoomRow({ room, roster, actions, useSessions, useSessionStatus, useSessionRetainInfo, useWork, wide, marked, integrated = false }) {
   const id = room.id
   const fallback = useSessions(list => previewOf(list, id))
   const preview = room.preview?.replace(/\s+/g, ' ').trim() || fallback
@@ -115,7 +117,7 @@ function RoomRow({ room, roster, actions, useSessions, useSessionStatus, useSess
     'data-room-id': id, onClick: () => actions.openSession(id),
     onContextMenu: (event) => { event.preventDefault(); actions.openMenu({ kind: 'room', id, x: event.clientX, y: event.clientY }) },
   },
-  h(RoomAvatar, { room, roster, size: 36 }),
+  h(RoomAvatar, { room, roster, size: integrated ? 28 : 36 }),
   pinned && !wide ? h(PinMark) : null,
   wide ? h('span', { className: 'bt-row-body' },
     h('span', { className: 'bt-row-name' }, h('span', { className: 'bt-row-title' }, room.name), pinned ? h(PinMark) : null),
@@ -250,6 +252,7 @@ function useListGlide(listRef, layout, key) {
 
 export function TeamSidebar(props) {
   const { wide, expandSidebar, useRoster, useUi, useSessions, actions } = props
+  const integrated = props.useShell?.(value => value.integrated) ?? false
   const listRef = useRef(null)
   const closing = useRef(false)
   useLayoutEffect(() => { closing.current = false })
@@ -293,7 +296,7 @@ export function TeamSidebar(props) {
     openAgentSession: id => navigate(actions.openAgentSession, id),
     newAgentSession: id => navigate(actions.newAgentSession, id),
   }
-  const rowProps = { roster, actions: rowActions, useSessions, useUi, useSessionStatus: props.useSessionStatus, useSessionRetainInfo: props.useSessionRetainInfo, useActivity: props.useActivity, useWork: props.useWork, wide }
+  const rowProps = { roster, actions: rowActions, useSessions, useUi, useSessionStatus: props.useSessionStatus, useSessionRetainInfo: props.useSessionRetainInfo, useActivity: props.useActivity, useWork: props.useWork, wide, integrated }
   // Typing while the sidebar has focus starts a search.
   const typeToSearch = (event) => {
     if (event.defaultPrevented || event.key.length !== 1 || event.key === ' ' || event.metaKey || event.ctrlKey || event.altKey || event.nativeEvent.isComposing) return
@@ -301,8 +304,14 @@ export function TeamSidebar(props) {
     event.preventDefault()
     actions.openPalette(event.key)
   }
-  return h('div', { className: wide ? 'bt-side' : 'bt-side bt-rail', onKeyDown: typeToSearch },
-    wide ? h('div', { className: 'bt-side-top' },
+  return h('div', { className: `bt-side${wide ? '' : ' bt-rail'}${integrated ? ' bt-native-side' : ''}`, onKeyDown: typeToSearch },
+    integrated ? h('div', { className: 'bt-native-tools' },
+      h('button', { type: 'button', className: 'bt-native-tool bt-native-back', 'aria-label': t('Return to chat'), title: t('Return to chat'), onClick: () => actions.returnToChat() }, h(ChevronLeftIcon), wide ? h('span', null, t('Return to chat')) : null),
+      h(UpdateButton, { useUpdate: props.useUpdate, actions }),
+      wide ? h('button', { type: 'button', className: 'bt-native-tool', 'aria-label': t('Search'), title: t('Search'), onClick: () => actions.openPalette() }, h(SearchIcon)) : null,
+      h('button', { type: 'button', className: 'bt-native-tool', 'aria-label': t('New…'), title: t('New…'), onClick: () => actions.openNewChat('new') }, h(PlusIcon)),
+      h(AccountLauncher, { actions, seat: false, compact: true }))
+    : wide ? h('div', { className: 'bt-side-top' },
       h('span', { className: 'bt-brand' }, h(BrandMark, { size: 22 }), h(BrandName)),
       h(UpdateButton, { useUpdate: props.useUpdate, actions }),
       h('button', { type: 'button', className: 'bt-round', 'aria-label': t('Search'), title: t('Search'), onClick: () => actions.openPalette() }, h(SearchIcon)),
@@ -483,7 +492,7 @@ const NO_SNAPSHOT = () => null
 // `seat` is the shell's settings.launcher seat: at priority -10 the whale wins it
 // over a shell account plugin's own launcher (the Desktop's "··· More"), which comes
 // back in Agent mode; FooterAccount stands in while no seat exists at all.
-export function AccountLauncher({ seat = true, settingsOpen, openSettings, openOnboarding, actions }) {
+export function AccountLauncher({ seat = true, settingsOpen, openSettings, openOnboarding, actions, compact = false }) {
   const [open, setOpen] = useState(false)
   useLayoutEffect(() => {
     if (!seat) return undefined
@@ -552,7 +561,9 @@ export function AccountLauncher({ seat = true, settingsOpen, openSettings, openO
   const tick = useViewport()
   const anchor = () => {
     const rect = button.current?.getBoundingClientRect()
-    if (rect) setBox({ left: rect.left, bottom: viewBottom() - rect.top + 5 })
+    if (rect) setBox(compact
+      ? { left: Math.max(8, Math.min(rect.right - 216, window.innerWidth - 224)), top: rect.bottom + 5 }
+      : { left: rect.left, bottom: viewBottom() - rect.top + 5 })
   }
   useLayoutEffect(() => { if (open) anchor() }, [open, tick])
   const toggle = () => { if (!open) anchor(); setOpen(value => !value) }
@@ -565,20 +576,20 @@ export function AccountLauncher({ seat = true, settingsOpen, openSettings, openO
   }, [open])
   const groups = [
     [
-      [t('Usage'), GaugeIcon, () => actions.openSettings('usage')],
+      [t(compact ? 'Usage statistics' : 'Usage'), GaugeIcon, () => actions.openSettings('usage')],
       [t('Connectors'), ConnectorIcon, () => actions.openConnectors()],
-      [t('Automation tasks'), ClockIcon, () => actions.selectPanel('schedules')],
-      [t('Bot settings'), GearIcon, () => actions.openSettings('general')],
+      ...(compact ? [] : [[t('Automation tasks'), ClockIcon, () => actions.selectPanel('schedules')]]),
+      [t(compact ? 'Agent settings' : 'Bot settings'), GearIcon, () => actions.openSettings('general')],
     ],
-    [
+    ...(compact ? [] : [[
       [t('Switch to classic Agent mode'), SwitchIcon, () => actions.setSurface('agent')],
-    ],
+    ]]),
   ]
-  if (signedIn) groups.push([[accountT('signOut'), SignOutIcon, askSignOut, undefined, true]])
+  if (signedIn && !compact) groups.push([[accountT('signOut'), SignOutIcon, askSignOut, undefined, true]])
   return h(Fragment, null,
-    h('button', { ref: button, type: 'button', className: 'bt-account', 'aria-label': t('Account'), 'aria-haspopup': 'menu', 'aria-expanded': open, onClick: toggle },
-      h('span', { className: 'bt-you', 'aria-hidden': true }, h(BotMark, { look: MAIN_LOOK, size: 24 }))),
-    open && box ? createPortal(h('div', { className: 'bt-menu bt-menu-up bt-account-menu', role: 'menu', 'aria-label': t('Account'), style: box },
+    h('button', { ref: button, type: 'button', className: compact ? 'bt-native-tool' : 'bt-account', 'aria-label': t(compact ? 'Agent tools' : 'Account'), title: compact ? t('Agent tools') : undefined, 'aria-haspopup': 'menu', 'aria-expanded': open, onClick: toggle },
+      compact ? h(GearIcon) : h('span', { className: 'bt-you', 'aria-hidden': true }, h(BotMark, { look: MAIN_LOOK, size: 24 }))),
+    open && box ? createPortal(h('div', { className: `bt-menu bt-account-menu${compact ? ' bt-native-menu' : ' bt-menu-up'}`, role: 'menu', 'aria-label': t(compact ? 'Agent tools' : 'Account'), style: box },
       confirm !== null ? h('div', { className: 'bt-confirm', role: 'alertdialog', 'aria-label': accountT('signOut') },
         h('p', { className: 'bt-confirm-text' }, accountT(confirm === 'running' ? 'signOutRunningDescription' : confirm === 'unknown' ? 'signOutUnknownDescription' : 'signOutDescription')),
         signOutError !== '' ? h('p', { className: 'bt-confirm-error', role: 'alert' }, signOutError) : null,

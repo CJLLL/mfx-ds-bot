@@ -39,6 +39,51 @@ runInNewContext(outputFiles[0].text, {
 })
 const { SHELL_CSS, SIDEBAR_CSS, TeamSidebar } = module.exports
 
+for (const wide of [true, false]) test(`native sidebar has compact Bot rows and one contextual return (wide=${wide})`, () => {
+  const calls = []
+  const bot = { id: 'chief', name: 'Chief', role: 'Coordinator', createdAt: 1 }
+  const roster = { bots: [bot], rooms: [], agents: [], mainBotId: 'chief', mainBotIds: ['chief'], byId: { chief: bot }, exchangeTurns: {}, ready: true }
+  const actions = Object.fromEntries(['returnToChat', 'openPalette', 'openNewChat', 'openSession', 'clearUnread', 'openMenu'].map(name => [name, (...args) => calls.push([name, ...args])]))
+  const tree = TeamSidebar({
+    wide, actions, useShell: pick => pick({ integrated: true }),
+    useRoster: pick => pick(roster), useUi: pick => pick({ unread: {} }), useRegistry: pick => pick({}),
+    useSessions: pick => pick({ ids: [], byId: {} }), useUpdate: () => ({}),
+    useSessionStatus: pick => pick(new Map()), useSessionRetainInfo: (_id, pick) => pick({ retainedBy: { mainView: 1 } }),
+    useActivity: pick => pick({}), useWork: pick => pick({ waiting: {}, rooms: {}, approvals: [] }),
+  })
+  const nodes = []
+  const walk = node => {
+    if (Array.isArray(node)) { node.forEach(walk); return }
+    if (!node || typeof node !== 'object') return
+    nodes.push(node)
+    walk(node.props?.children)
+  }
+  walk(tree)
+  const buttons = nodes.filter(node => node.type === 'button')
+  const back = buttons.find(node => node.props['aria-label'] === 'Return to chat')
+  assert.ok(back)
+  back.props.onClick()
+  buttons.find(node => node.props['aria-label'] === 'New…').props.onClick()
+  if (wide) buttons.find(node => node.props['aria-label'] === 'Search').props.onClick()
+  assert.deepEqual(calls.slice(0, 2), [['returnToChat'], ['openNewChat', 'new']])
+  assert.equal(nodes.some(node => node.type?.name === 'BrandName'), false)
+  assert.equal(buttons.some(node => node.props['aria-label'] === 'Collapse sidebar'), false)
+  const menu = nodes.find(node => node.type?.name === 'AccountLauncher')
+  assert.equal(menu.props.compact, true)
+  assert.equal(menu.props.seat, false)
+  const item = nodes.find(node => node.type?.name === 'BotRow')
+  const row = item.type(item.props)
+  assert.equal(row.props.className, 'bt-row')
+  assert.equal(row.props['aria-current'], 'page')
+  nodes.length = 0
+  walk(row)
+  const avatar = nodes.find(node => node.type?.name === 'BotAvatar')
+  assert.equal(avatar.props.size, 28)
+  assert.equal(avatar.props.main, false)
+  row.props.onClick()
+  assert.deepEqual(calls.at(-1), ['openSession', 'chief'])
+})
+
 function navigationSidebar(wide, { shell = true } = {}) {
   const calls = []
   const refs = []
@@ -402,10 +447,9 @@ test('the Bot footer lays out the account, another plugin\'s entry and the setti
   assert.equal(columnOf(document.querySelector('.x_settingsArea')), '3')
 })
 
-// #452: the Connect plugins button left the footer; what DS Bot puts there is
-// the account menu and the way back from Agent mode.
-test('the Bot footer holds the account and the return button only', () => {
+// The Bot launcher belongs to the standard menu; the account stays in the footer.
+test('the Bot footer holds the account only', () => {
   const source = readFileSync(new URL('../src/client/index.js', import.meta.url), 'utf8')
   const ids = [...source.matchAll(/shadow\('sidebar\.footer\.action',\s*\{[^}]*?id:\s*['"]([^'"]+)['"]/g)].map(match => match[1])
-  assert.deepEqual(ids.sort(), ['bot-account', 'bot-return'])
+  assert.deepEqual(ids.sort(), ['bot-account'])
 })

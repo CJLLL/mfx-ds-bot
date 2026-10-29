@@ -43,6 +43,13 @@ module.exports = __toCommonJS(index_exports);
 var NAMESPACE = "ds-bot";
 var ZH = {
   // Shared
+  Agents: "智能体",
+  "Back to classic Agent": "返回经典 Agent",
+  "Return to chat": "返回聊天",
+  "Agent tools": "智能体设置",
+  "Agent settings": "智能体设置",
+  "Usage statistics": "用量统计",
+  "Lead agent": "主智能体",
   "Main Bot": "主 Bot",
   Working: "工作中",
   "Waiting for your answer": "等你回答",
@@ -1440,8 +1447,8 @@ function bodyOf(def, paint, flat = false) {
     return "";
   }
 }
-var eyeMarkup = ([cx, cy, w, h45, tilt]) => `<g transform="translate(${cx} ${cy}) rotate(${tilt})"><rect class="bt-eye" x="${-w / 2}" y="${-h45 / 2}" width="${w}" height="${h45}" rx="${w / 2}"/></g>`;
-var happyEyeMarkup = ([cx, cy, w, h45, tilt]) => `<g transform="translate(${cx} ${cy}) rotate(${tilt})"><path class="bt-eye-happy" opacity="0" d="M${-w * 0.62} ${h45 * 0.14}Q0 ${-h45 * 0.42} ${w * 0.62} ${h45 * 0.14}" fill="none" stroke="#000" stroke-width="${w * 0.5}" stroke-linecap="round"/></g>`;
+var eyeMarkup = ([cx, cy, w, h46, tilt]) => `<g transform="translate(${cx} ${cy}) rotate(${tilt})"><rect class="bt-eye" x="${-w / 2}" y="${-h46 / 2}" width="${w}" height="${h46}" rx="${w / 2}"/></g>`;
+var happyEyeMarkup = ([cx, cy, w, h46, tilt]) => `<g transform="translate(${cx} ${cy}) rotate(${tilt})"><path class="bt-eye-happy" opacity="0" d="M${-w * 0.62} ${h46 * 0.14}Q0 ${-h46 * 0.42} ${w * 0.62} ${h46 * 0.14}" fill="none" stroke="#000" stroke-width="${w * 0.5}" stroke-linecap="round"/></g>`;
 var maskBox = (size) => `maskUnits="userSpaceOnUse" x="${-size}" y="${-size}" width="${size * 3}" height="${size * 3}"`;
 var holes = (def, eyes) => `<rect x="${-def.size}" y="${-def.size}" width="${def.size * 3}" height="${def.size * 3}" fill="#fff"/>${eyes}`;
 var MASK_ID = "%MASK%";
@@ -2188,12 +2195,12 @@ function liveSprings(apply2) {
     const dt = Math.min(0.5, Math.max(1e-3, (now - last) / 1e3));
     last = now;
     const steps = Math.ceil(dt * 240);
-    const h45 = dt / steps;
+    const h46 = dt / steps;
     let moving = false;
     for (const value of values.values()) {
       for (let index = 0; index < steps; index += 1) {
-        value.v += (-value.k * (value.x - value.to) - value.c * value.v) * h45;
-        value.x += value.v * h45;
+        value.v += (-value.k * (value.x - value.to) - value.c * value.v) * h46;
+        value.x += value.v * h46;
       }
       if (Math.abs(value.x - value.to) < 0.05 && Math.abs(value.v) < 1) {
         value.x = value.to;
@@ -8555,7 +8562,7 @@ var waitingFor = (roster, waits) => {
   const names = [...(waits?.bots ?? []).map((id) => roster.byId[id]?.name), ...(waits?.rooms ?? []).map((id) => roster.roomsById[id]?.name)].filter(Boolean);
   return names.length === 0 ? "" : t("Waiting for {names}", { names: names.join(t(" and ")) });
 };
-function BotRow({ bot, roster, actions, useSessions, useSessionStatus, useSessionRetainInfo, useActivity, useWork, wide, marked }) {
+function BotRow({ bot, roster, actions, useSessions, useSessionStatus, useSessionRetainInfo, useActivity, useWork, wide, marked, integrated = false }) {
   const id = bot.id;
   const part = currentPart(bot);
   const preview = useSessions((list) => previewOf(list, part, roster.exchangeTurns[part]));
@@ -8582,7 +8589,7 @@ function BotRow({ bot, roster, actions, useSessions, useSessionStatus, useSessio
   };
   const pinned = bot.pinned === true && !tile;
   const label = [bot.name, main ? t("Main Bot") : "", pinned ? t("Pinned") : "", running || away ? t("Working") : "", waitsFor, approval ? t("Waiting for your approval") : alert ? t("Waiting for your answer") : "", unread ? t("Unread activity") : ""].filter(Boolean).join(", ");
-  if (tile && wide) {
+  if (tile && wide && !integrated) {
     return (0, import_react15.createElement)("div", { className: "bt-tile-wrap" }, (0, import_react15.createElement)(
       "button",
       {
@@ -8612,18 +8619,24 @@ function BotRow({ bot, roster, actions, useSessions, useSessionStatus, useSessio
       onClick: () => actions.openSession(id),
       onContextMenu
     },
-    (0, import_react15.createElement)(BotAvatar, { bot, size: 36, state, main }),
+    (0, import_react15.createElement)(BotAvatar, { bot, size: integrated ? 28 : 36, state, main: main && !integrated }),
     pinned && !wide ? (0, import_react15.createElement)(PinMark) : null,
     wide ? (0, import_react15.createElement)(
       "span",
       { className: "bt-row-body" },
-      (0, import_react15.createElement)("span", { className: "bt-row-name" }, (0, import_react15.createElement)("span", { className: "bt-row-title" }, bot.name), pinned ? (0, import_react15.createElement)(PinMark) : null),
-      runningLine ? (0, import_react15.createElement)("span", { className: "bt-row-preview" }, runningLine) : awayLine ? (0, import_react15.createElement)("span", { className: "bt-row-preview" }, awayLine) : waitsFor ? (0, import_react15.createElement)("span", { className: "bt-row-preview" }, waitsFor) : preview ? (0, import_react15.createElement)("span", { className: "bt-row-preview" }, preview) : null
+      (0, import_react15.createElement)(
+        "span",
+        { className: "bt-row-name" },
+        (0, import_react15.createElement)("span", { className: "bt-row-title" }, bot.name),
+        pinned ? (0, import_react15.createElement)(PinMark) : null,
+        integrated && main ? (0, import_react15.createElement)("span", { className: "bt-native-main" }, t("Lead agent")) : null
+      ),
+      runningLine ? (0, import_react15.createElement)("span", { className: "bt-row-preview" }, runningLine) : awayLine ? (0, import_react15.createElement)("span", { className: "bt-row-preview" }, awayLine) : waitsFor ? (0, import_react15.createElement)("span", { className: "bt-row-preview" }, waitsFor) : integrated && main && bot.role ? (0, import_react15.createElement)("span", { className: "bt-row-preview" }, bot.role) : preview ? (0, import_react15.createElement)("span", { className: "bt-row-preview" }, preview) : null
     ) : null,
     wide && unread && !active ? (0, import_react15.createElement)("span", { className: "bt-unread", "aria-hidden": true }) : null
   );
 }
-function RoomRow({ room: room2, roster, actions, useSessions, useSessionStatus, useSessionRetainInfo, useWork, wide, marked }) {
+function RoomRow({ room: room2, roster, actions, useSessions, useSessionStatus, useSessionRetainInfo, useWork, wide, marked, integrated = false }) {
   const id = room2.id;
   const fallback = useSessions((list) => previewOf(list, id));
   const preview = room2.preview?.replace(/\s+/g, " ").trim() || fallback;
@@ -8651,7 +8664,7 @@ function RoomRow({ room: room2, roster, actions, useSessions, useSessionStatus, 
         actions.openMenu({ kind: "room", id, x: event.clientX, y: event.clientY });
       }
     },
-    (0, import_react15.createElement)(RoomAvatar, { room: room2, roster, size: 36 }),
+    (0, import_react15.createElement)(RoomAvatar, { room: room2, roster, size: integrated ? 28 : 36 }),
     pinned && !wide ? (0, import_react15.createElement)(PinMark) : null,
     wide ? (0, import_react15.createElement)(
       "span",
@@ -8826,6 +8839,7 @@ function useListGlide(listRef, layout, key) {
 }
 function TeamSidebar(props) {
   const { wide, expandSidebar, useRoster, useUi, useSessions, actions } = props;
+  const integrated = props.useShell?.((value) => value.integrated) ?? false;
   const listRef = (0, import_react15.useRef)(null);
   const closing = (0, import_react15.useRef)(false);
   (0, import_react15.useLayoutEffect)(() => {
@@ -8868,7 +8882,7 @@ function TeamSidebar(props) {
     openAgentSession: (id) => navigate(actions.openAgentSession, id),
     newAgentSession: (id) => navigate(actions.newAgentSession, id)
   };
-  const rowProps = { roster, actions: rowActions, useSessions, useUi, useSessionStatus: props.useSessionStatus, useSessionRetainInfo: props.useSessionRetainInfo, useActivity: props.useActivity, useWork: props.useWork, wide };
+  const rowProps = { roster, actions: rowActions, useSessions, useUi, useSessionStatus: props.useSessionStatus, useSessionRetainInfo: props.useSessionRetainInfo, useActivity: props.useActivity, useWork: props.useWork, wide, integrated };
   const typeToSearch = (event) => {
     if (event.defaultPrevented || event.key.length !== 1 || event.key === " " || event.metaKey || event.ctrlKey || event.altKey || event.nativeEvent.isComposing) return;
     if (event.target instanceof Element && event.target.closest("input,textarea,[contenteditable]")) return;
@@ -8877,8 +8891,16 @@ function TeamSidebar(props) {
   };
   return (0, import_react15.createElement)(
     "div",
-    { className: wide ? "bt-side" : "bt-side bt-rail", onKeyDown: typeToSearch },
-    wide ? (0, import_react15.createElement)(
+    { className: `bt-side${wide ? "" : " bt-rail"}${integrated ? " bt-native-side" : ""}`, onKeyDown: typeToSearch },
+    integrated ? (0, import_react15.createElement)(
+      "div",
+      { className: "bt-native-tools" },
+      (0, import_react15.createElement)("button", { type: "button", className: "bt-native-tool bt-native-back", "aria-label": t("Return to chat"), title: t("Return to chat"), onClick: () => actions.returnToChat() }, (0, import_react15.createElement)(ChevronLeftIcon), wide ? (0, import_react15.createElement)("span", null, t("Return to chat")) : null),
+      (0, import_react15.createElement)(UpdateButton, { useUpdate: props.useUpdate, actions }),
+      wide ? (0, import_react15.createElement)("button", { type: "button", className: "bt-native-tool", "aria-label": t("Search"), title: t("Search"), onClick: () => actions.openPalette() }, (0, import_react15.createElement)(SearchIcon)) : null,
+      (0, import_react15.createElement)("button", { type: "button", className: "bt-native-tool", "aria-label": t("New…"), title: t("New…"), onClick: () => actions.openNewChat("new") }, (0, import_react15.createElement)(PlusIcon)),
+      (0, import_react15.createElement)(AccountLauncher, { actions, seat: false, compact: true })
+    ) : wide ? (0, import_react15.createElement)(
       "div",
       { className: "bt-side-top" },
       (0, import_react15.createElement)("span", { className: "bt-brand" }, (0, import_react15.createElement)(BrandMark, { size: 22 }), (0, import_react15.createElement)(BrandName)),
@@ -9074,7 +9096,7 @@ function pressSettingsShortcut() {
 var NO_SUBSCRIBE = () => () => {
 };
 var NO_SNAPSHOT = () => null;
-function AccountLauncher({ seat = true, settingsOpen, openSettings, openOnboarding, actions }) {
+function AccountLauncher({ seat = true, settingsOpen, openSettings, openOnboarding, actions, compact: compact2 = false }) {
   const [open, setOpen] = (0, import_react15.useState)(false);
   (0, import_react15.useLayoutEffect)(() => {
     if (!seat) return void 0;
@@ -9159,7 +9181,7 @@ function AccountLauncher({ seat = true, settingsOpen, openSettings, openOnboardi
   const tick = useViewport();
   const anchor = () => {
     const rect = button.current?.getBoundingClientRect();
-    if (rect) setBox({ left: rect.left, bottom: viewBottom() - rect.top + 5 });
+    if (rect) setBox(compact2 ? { left: Math.max(8, Math.min(rect.right - 216, window.innerWidth - 224)), top: rect.bottom + 5 } : { left: rect.left, bottom: viewBottom() - rect.top + 5 });
   };
   (0, import_react15.useLayoutEffect)(() => {
     if (open) anchor();
@@ -9176,27 +9198,27 @@ function AccountLauncher({ seat = true, settingsOpen, openSettings, openOnboardi
   }, [open]);
   const groups = [
     [
-      [t("Usage"), GaugeIcon, () => actions.openSettings("usage")],
+      [t(compact2 ? "Usage statistics" : "Usage"), GaugeIcon, () => actions.openSettings("usage")],
       [t("Connectors"), ConnectorIcon, () => actions.openConnectors()],
-      [t("Automation tasks"), ClockIcon, () => actions.selectPanel("schedules")],
-      [t("Bot settings"), GearIcon, () => actions.openSettings("general")]
+      ...compact2 ? [] : [[t("Automation tasks"), ClockIcon, () => actions.selectPanel("schedules")]],
+      [t(compact2 ? "Agent settings" : "Bot settings"), GearIcon, () => actions.openSettings("general")]
     ],
-    [
+    ...compact2 ? [] : [[
       [t("Switch to classic Agent mode"), SwitchIcon, () => actions.setSurface("agent")]
-    ]
+    ]]
   ];
-  if (signedIn) groups.push([[accountT("signOut"), SignOutIcon, askSignOut, void 0, true]]);
+  if (signedIn && !compact2) groups.push([[accountT("signOut"), SignOutIcon, askSignOut, void 0, true]]);
   return (0, import_react15.createElement)(
     import_react15.Fragment,
     null,
     (0, import_react15.createElement)(
       "button",
-      { ref: button, type: "button", className: "bt-account", "aria-label": t("Account"), "aria-haspopup": "menu", "aria-expanded": open, onClick: toggle },
-      (0, import_react15.createElement)("span", { className: "bt-you", "aria-hidden": true }, (0, import_react15.createElement)(BotMark, { look: MAIN_LOOK, size: 24 }))
+      { ref: button, type: "button", className: compact2 ? "bt-native-tool" : "bt-account", "aria-label": t(compact2 ? "Agent tools" : "Account"), title: compact2 ? t("Agent tools") : void 0, "aria-haspopup": "menu", "aria-expanded": open, onClick: toggle },
+      compact2 ? (0, import_react15.createElement)(GearIcon) : (0, import_react15.createElement)("span", { className: "bt-you", "aria-hidden": true }, (0, import_react15.createElement)(BotMark, { look: MAIN_LOOK, size: 24 }))
     ),
     open && box ? (0, import_react_dom3.createPortal)((0, import_react15.createElement)(
       "div",
-      { className: "bt-menu bt-menu-up bt-account-menu", role: "menu", "aria-label": t("Account"), style: box },
+      { className: `bt-menu bt-account-menu${compact2 ? " bt-native-menu" : " bt-menu-up"}`, role: "menu", "aria-label": t(compact2 ? "Agent tools" : "Account"), style: box },
       confirm !== null ? (0, import_react15.createElement)(
         "div",
         { className: "bt-confirm", role: "alertdialog", "aria-label": accountT("signOut") },
@@ -19152,7 +19174,7 @@ function noticeApprovals({ work, roster, shownSession, openSession, since = Date
 function listedOpener({ list, open, refresh, current }) {
   let drop = () => {
   };
-  return (target) => {
+  const show2 = (target) => {
     drop();
     drop = () => {
     };
@@ -19178,7 +19200,178 @@ function listedOpener({ list, open, refresh, current }) {
     drop = off;
     refresh?.();
   };
+  show2.cancel = () => {
+    drop();
+    drop = () => {
+    };
+  };
+  return show2;
 }
+
+// src/client/bot-entry.js
+var import_react47 = require("react");
+var BOT_PANEL_ID = "mfx-ds-bot";
+var AGENT_PANEL_ID = "mfx-ds-bot-classic";
+function BotEntryIcon({ size = 18 }) {
+  return (0, import_react47.createElement)("span", { "aria-hidden": true, style: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size } }, (0, import_react47.createElement)(PeopleIcon));
+}
+function BotEntryPanel({ openBot }) {
+  (0, import_react47.useLayoutEffect)(() => {
+    openBot();
+  }, [openBot]);
+  return null;
+}
+function installBotEntry(ctx, actions, surface, shell) {
+  const openBot = () => {
+    actions.setSurface("bot");
+    ctx.layout.selectPanel(null);
+  };
+  const offPanel = ctx.slots.inject("main", () => ctx.slots.register({
+    name: "main",
+    key: BOT_PANEL_ID,
+    inject: () => ({ openBot })
+  }, BotEntryPanel));
+  const offEntry = ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
+    name: "sidebar.panellist",
+    id: BOT_PANEL_ID,
+    order: 0,
+    label: () => t("Agents")
+  }, BotEntryIcon));
+  let offClassic;
+  const sync = () => {
+    if (surface.getSnapshot().mode !== "bot" || shell?.getSnapshot().integrated) {
+      offClassic?.();
+      offClassic = void 0;
+      return;
+    }
+    if (offClassic) return;
+    const panel = ctx.slots.inject("main", () => ctx.slots.register({
+      name: "main",
+      key: AGENT_PANEL_ID,
+      inject: () => ({ openBot: () => {
+        actions.setSurface("agent");
+        ctx.layout.selectPanel(null);
+        ctx.uiWorkspace.startSession();
+      } })
+    }, BotEntryPanel));
+    const entry = ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
+      name: "sidebar.panellist",
+      id: AGENT_PANEL_ID,
+      order: 1,
+      label: () => t("Back to classic Agent")
+    }, ChevronLeftIcon));
+    offClassic = () => {
+      entry();
+      panel();
+    };
+  };
+  const stop = surface.subscribe(sync);
+  const stopShell = shell?.subscribe(sync);
+  sync();
+  const offNative = ctx.on("maofuxing-ui/native-navigation", () => actions.setSurface("agent"));
+  const offLayout = ctx.layout.panelInfo.subscribe(() => {
+    const id = ctx.layout.panelInfo.getSnapshot().activePanelId;
+    if (id !== null && id !== BOT_PANEL_ID && id !== AGENT_PANEL_ID) actions.setSurface("agent");
+  });
+  return () => {
+    offNative();
+    offLayout();
+    stop();
+    stopShell?.();
+    offClassic?.();
+    offEntry();
+    offPanel();
+  };
+}
+
+// src/client/bot-landing.js
+function botLanding({ surface, refresh, resolve: resolve2, open }) {
+  let mode = surface.getSnapshot().mode;
+  let revision = 0;
+  const stop = surface.subscribe(() => {
+    const next = surface.getSnapshot().mode;
+    if (next !== mode) {
+      mode = next;
+      revision += 1;
+    }
+  });
+  return {
+    async land(id, last) {
+      if (mode !== "bot") return;
+      const started = revision;
+      if (last) await refresh().catch(() => {
+      });
+      if (started !== revision || mode !== "bot") return;
+      open(resolve2(id, last));
+    },
+    dispose() {
+      revision += 1;
+      mode = "agent";
+      stop();
+    }
+  };
+}
+
+// src/client/native-shell.js
+function openNativeSettings(ctx, fallback, onboardingId) {
+  if (!ctx.get("maofuxingSettings")) {
+    fallback();
+    return;
+  }
+  requestAnimationFrame(() => {
+    const settings = ctx.get("maofuxingSettings");
+    if (!settings) {
+      fallback();
+      return;
+    }
+    if (onboardingId !== void 0) settings.openOnboarding(onboardingId);
+    else settings.open();
+  });
+}
+function installNativeShell(ctx, surface, connect) {
+  const fiber = ctx.inject(["maofuxingConversation"], (scope) => {
+    scope.effect(() => {
+      const client = scope.maofuxingConversation;
+      const entry = client.register(BOT_PANEL_ID);
+      connect(client);
+      const sync = () => entry.setActive(surface.getSnapshot().mode === "bot");
+      const stop = surface.subscribe(sync);
+      sync();
+      return () => {
+        stop();
+        entry.dispose();
+        connect(null);
+      };
+    }, "ds-bot: native conversation surface");
+  });
+  return () => fiber.dispose();
+}
+var NATIVE_SIDEBAR_CSS = `
+.bt-side.bt-native-side{--bt-ink:var(--dsw-alias-label-primary);--bt-ink-2:var(--dsw-alias-label-secondary);--bt-ink-3:var(--dsw-alias-label-tertiary);--bt-hover:var(--dsw-alias-interactive-bg-hover);--bt-active:var(--dsw-alias-interactive-bg-hover);box-sizing:border-box;display:flex;flex-direction:column;gap:0;padding:8px 0 0;margin:0;min-height:0;font-family:inherit;color:var(--bt-ink)}
+.bt-native-tools{display:flex;align-items:center;gap:2px;min-height:38px;padding:0 4px;margin-bottom:4px}
+.bt-native-tools .bt-native-back{display:inline-flex;align-items:center;gap:4px;min-width:0;margin-right:auto;padding:0 4px;width:auto;font-size:12px;white-space:nowrap}
+.bt-native-tool,.bt-native-tools .bt-round{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:none;padding:0;border:0;border-radius:8px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;cursor:pointer;box-shadow:none}
+.bt-native-tool svg,.bt-native-tools .bt-round svg{width:14px;height:14px}
+.bt-native-tool:hover,.bt-native-tools .bt-round:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
+.bt-native-tool:focus-visible,.bt-native-side .bt-row:focus-visible{outline:2px solid var(--mfx-workspace-focus);outline-offset:2px}
+.bt-side.bt-native-side>.bt-list{flex:none;overflow:visible;gap:2px;margin:0;scrollbar-gutter:auto}
+.bt-native-side .bt-row{gap:8px;min-height:50px;padding:6px 8px;border-radius:8px;font-family:inherit}
+.bt-native-side .bt-row[aria-current=page]{background:var(--dsw-alias-interactive-bg-hover)}
+.bt-native-side .bt-row-name{gap:6px;font-size:var(--mfx-sidebar-item-font-size,13px);font-weight:400;line-height:20px}
+.bt-native-side .bt-row-preview{font-size:12px;line-height:18px}
+.bt-native-main{flex:none;margin-left:auto;color:var(--dsw-alias-label-tertiary);font-size:11px;line-height:16px}
+.bt-native-side .bt-agent-ava{width:28px;height:28px;border-radius:8px}
+.bt-side.bt-native-side.bt-rail{gap:4px;padding-top:8px}
+.bt-native-side.bt-rail .bt-native-tools{flex-direction:column;margin:0;padding:0;gap:4px}
+.bt-native-side.bt-rail .bt-native-back{width:28px;margin:0;padding:0}
+.bt-native-side.bt-rail .bt-row{min-height:36px;padding:4px;justify-content:center}
+.bt-native-side.bt-rail>.bt-list{width:100%}
+.bt-menu.bt-native-menu{width:216px;min-width:0;max-width:calc(100vw - 16px);padding:5px;border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-family:inherit;box-shadow:0 6px 20px color-mix(in srgb,var(--dsw-alias-label-primary) 10%,transparent)}
+.bt-native-menu button{min-height:32px;gap:8px;padding:6px 8px;color:var(--dsw-alias-label-primary);font-size:13px;font-weight:400;line-height:20px}
+.bt-native-menu button:hover{background:var(--dsw-alias-interactive-bg-hover)}
+.bt-native-menu button:focus-visible{outline:2px solid var(--mfx-workspace-focus);outline-offset:-2px}
+.bt-native-menu button svg{width:14px;height:14px;color:var(--dsw-alias-label-secondary)}
+`;
 
 // src/client/index.js
 var inject = ["sessions", "uiWorkspace", "uiConversation", "slots", "theme", "layout"];
@@ -19192,6 +19385,8 @@ function apply(ctx) {
   let seenAt = seenStore.read();
   const ui2 = createSource({ details: null, view: "details", renaming: false, tab: null, side: null, newChat: null, exchange: null, menu: null, voice: null, palette: null, quote: null, settings: null, memory: null, toast: null, signIn: null, renameAgent: null, unread: unreadStore.read(), reactions: reactionStore.read(), visits: {} });
   const surface = createSource({ mode: readMode(), plain: false });
+  const shell = createSource({ integrated: false });
+  let nativeClient = null;
   let agentSessionCache = /* @__PURE__ */ new Set();
   try {
     agentSessionCache = new Set(JSON.parse(localStorage.getItem(STORAGE.agentSessions) ?? "[]"));
@@ -19464,7 +19659,7 @@ function apply(ctx) {
       key = next;
       style.textContent = themeCss(themes[id], accent);
       const release = releaseTokens;
-      releaseTokens = ctx.theme.overrideTokens("ds-bot", shellTokens(themes[id]));
+      releaseTokens = shell.getSnapshot().integrated ? null : ctx.theme.overrideTokens("ds-bot", shellTokens(themes[id]));
       if (typeof release === "function") release();
       if (snapshot.ready) {
         try {
@@ -19530,7 +19725,24 @@ function apply(ctx) {
     expected2 = target;
     ctx.uiWorkspace.openSession(target);
   }, current: mainView });
+  const landing = botLanding({
+    surface,
+    refresh: pull,
+    resolve: (id, last) => {
+      const bot = last ? roster.getSnapshot().byId[last.botId] : void 0;
+      return bot && currentPart(bot) !== last.sessionId ? currentPart(bot) : partFor(id);
+    },
+    open: (target) => {
+      setPlain(false);
+      show2(target);
+    }
+  });
+  ctx.effect(() => () => {
+    landing.dispose();
+    show2.cancel();
+  }, "ds-bot: pending navigation");
   const homeToMainBot = () => {
+    if (surface.getSnapshot().mode !== "bot") return;
     const snapshot = roster.getSnapshot();
     if (!snapshot.ready || !snapshot.mainBotId) return;
     const main = mainView();
@@ -19553,6 +19765,15 @@ function apply(ctx) {
     // The full-pane overlays sit above the conversation, so opening one must dismiss them
     // or the click appears to do nothing.
     isAgentSession: (id) => isAgentSessionId(id),
+    returnToChat: () => {
+      if (nativeClient) {
+        nativeClient.returnToChat();
+        return;
+      }
+      actions.setSurface("agent");
+      ctx.layout.selectPanel(null);
+      ctx.uiWorkspace.startSession();
+    },
     openSession: (id) => {
       if (isAgentSessionId(id)) return actions.openAgentSession(id);
       ui2.set((state) => state.newChat || state.exchange || state.menu || state.palette ? { ...state, newChat: null, exchange: null, menu: null, palette: null } : state);
@@ -19617,14 +19838,7 @@ function apply(ctx) {
     },
     // `last` is the Bot conversation the view held before it cleared: when that part
     // was archived for a fresh one, the view goes on in the fresh one.
-    landOn: async (id, last) => {
-      if (last) await pull().catch(() => {
-      });
-      const bot = last ? roster.getSnapshot().byId[last.botId] : void 0;
-      setPlain(false);
-      const target = bot && currentPart(bot) !== last.sessionId ? currentPart(bot) : partFor(id);
-      show2(target);
-    },
+    landOn: landing.land,
     selectPanel: (id) => {
       ctx.layout.selectPanel(id);
     },
@@ -19640,6 +19854,8 @@ function apply(ctx) {
         return;
       }
       if (mode === "agent") {
+        show2.cancel();
+        expected2 = null;
         ui2.set((state) => ({ ...state, details: null, view: "details", settings: null, palette: null, newChat: null, menu: null, voice: null, exchange: null, memory: null, toast: null }));
       }
       writeMode(mode);
@@ -19734,8 +19950,8 @@ function apply(ctx) {
   actions.closeSignIn = () => ui2.set((state) => ({ ...state, signIn: null }));
   actions.accountT = () => ctx.get("locale").bind("settings.account");
   actions.speech = () => ctx.get("remote.speech") ?? void 0;
-  actions.openHarnessSettings = openHarnessSettings;
-  actions.openHarnessOnboarding = openHarnessOnboarding;
+  actions.openHarnessSettings = () => openNativeSettings(ctx, openHarnessSettings);
+  actions.openHarnessOnboarding = (id) => openNativeSettings(ctx, () => openHarnessOnboarding(id), id);
   actions.voiceSetup = () => {
     const navigation = ctx.get("pluginNavigation");
     return navigation ? () => navigation.openBundle(VOICE_BUNDLE) : null;
@@ -19773,7 +19989,7 @@ function apply(ctx) {
   const browserPages = browsers?.pages ?? createSource({});
   const browserTabs = browsers?.tabs ?? createSource({});
   const browserHolds = browsers?.holds ?? createSource({});
-  const face = () => ({ actions, hooks: { roster, ui: ui2, activity, work, memoryNews, registry, turnClock, live, cards, heldCards, browserPages, browserTabs, browserHolds, surface, update } });
+  const face = () => ({ actions, hooks: { roster, ui: ui2, activity, work, memoryNews, registry, turnClock, live, cards, heldCards, browserPages, browserTabs, browserHolds, surface, update, shell } });
   ctx.effect(() => noticeApprovals({
     work,
     roster,
@@ -19920,6 +20136,7 @@ function apply(ctx) {
   const installShell = () => [
     () => installCompiledStyles(SHELL_CSS, "shell"),
     () => installCompiledStyles(SIDEBAR_CSS, "sidebar"),
+    ...shell.getSnapshot().integrated ? [() => installCompiledStyles(NATIVE_SIDEBAR_CSS, "native-sidebar")] : [],
     () => installCompiledStyles(SECRET_CSS, "secrets"),
     () => installCompiledStyles(MODEL_CSS + FOLDER_CSS + BOT_SETTINGS_CSS + GROUP_SETTINGS_CSS + AVATAR_LIBRARY_CSS, "models"),
     () => installCompiledStyles(USAGE_CSS, "usage"),
@@ -19935,13 +20152,14 @@ function apply(ctx) {
     () => installCompiledStyles(BROWSER_CSS, "browser"),
     () => installTheme(),
     () => shadow("sidebar.workspaces", { priority: BOT_PRIORITY, inject: face }, TeamSidebar),
-    () => shadow("sidebar.brand.mark", { priority: BOT_PRIORITY }, BrandMark),
-    () => shadow("sidebar.brand.name", { priority: BOT_PRIORITY }, BrandName),
-    () => shadow("sidebar.footer.action", { id: "bot-account", order: -200, inject: face }, FooterAccount),
-    () => shadow("settings.trigger", { priority: BOT_PRIORITY }, YouAvatar),
-    // The whale wins the seat over a shell account plugin's own launcher (the
-    // Desktop's "··· More"), which comes back in Agent mode.
-    () => shadow("settings.launcher", { priority: BOT_PRIORITY, inject: face }, AccountLauncher),
+    ...shell.getSnapshot().integrated ? [] : [
+      () => shadow("sidebar.brand.mark", { priority: BOT_PRIORITY }, BrandMark),
+      () => shadow("sidebar.brand.name", { priority: BOT_PRIORITY }, BrandName),
+      () => shadow("sidebar.footer.action", { id: "bot-account", order: -200, inject: face }, FooterAccount),
+      () => shadow("settings.trigger", { priority: BOT_PRIORITY }, YouAvatar),
+      // Standalone DSH keeps its Bot account launcher; Maofuxing owns its account UI.
+      () => shadow("settings.launcher", { priority: BOT_PRIORITY, inject: face }, AccountLauncher)
+    ],
     () => shadow("shell.overlay", { id: "bot", order: 50, inject: face }, Overlays),
     () => shadow("shell.overlay", { id: "bot-signin", order: 55, inject: face }, DeepSeekSignIn),
     () => shadow("shell.overlay", { id: "bot-toast", order: 60, inject: face }, ErrorToast)
@@ -19990,8 +20208,11 @@ function apply(ctx) {
     () => shadow("conversation.input.dock", { id: "bot-secret", order: -90, inject: face }, SecretDock),
     () => shadow("conversation.input.dock", { id: "bot-handoff", order: -85, inject: face }, HandoffDock)
   ];
-  ctx.effect(() => installCompiledStyles(RETURN_CSS, "return"), "ds-bot: return styles");
-  shadow("sidebar.footer.action", { id: "bot-return", order: -300, inject: face }, BotReturn);
+  ctx.effect(() => installBotEntry(ctx, actions, surface, shell), "ds-bot: sidebar entry");
+  ctx.effect(() => installNativeShell(ctx, surface, (client) => {
+    nativeClient = client;
+    shell.set({ integrated: client !== null });
+  }), "ds-bot: native shell");
   ctx.effect(() => {
     let previous;
     const sync = () => {
@@ -20077,8 +20298,13 @@ function apply(ctx) {
     reconcile();
     if (surface.getSnapshot().mode === "bot") ensureBotHome();
     const unsub = surface.subscribe(reconcile);
+    const offShell = shell.subscribe(() => {
+      groups.remount("shell", groupsFor(surface.getSnapshot()));
+      reconcile();
+    });
     return () => {
       unsub();
+      offShell();
       clearTimeout(verifyTimer);
       groups.dispose();
     };

@@ -7,7 +7,7 @@ import { themeCss, shellTokens, registry, registerShape, registerTheme, allTheme
 import { MENTION_ORIGIN, currentPart } from './text.js'
 import { SHELL_CSS, CONVERSATION_CSS, installStyles, installCompiledStyles } from './styles.js'
 import { lookOf } from './mark.js'
-import { TeamSidebar, YouAvatar, AccountLauncher, FooterAccount, BrandMark, BrandName, BotReturn, SIDEBAR_CSS, RETURN_CSS, holdShellShortcuts, openHarnessOnboarding, openHarnessSettings } from './sidebar.js'
+import { TeamSidebar, YouAvatar, AccountLauncher, FooterAccount, BrandMark, BrandName, SIDEBAR_CSS, holdShellShortcuts, openHarnessOnboarding, openHarnessSettings } from './sidebar.js'
 import { HeaderPill } from './header.js'
 import { ComposerPlus, ComposerVoice, menuIcons } from './composer.js'
 import { CHATS_SOURCE, atSources } from './at-menu.js'
@@ -43,6 +43,9 @@ import { MEMBER_CSS, MemberDock } from './member-status.js'
 import { USER_MESSAGE_CSS, UserMessageCell, canDrawUserMessages } from './user-message.js'
 import { noticeApprovals } from './approval-notices.js'
 import { listedOpener } from './open-listed.js'
+import { installBotEntry } from './bot-entry.js'
+import { botLanding } from './bot-landing.js'
+import { installNativeShell, openNativeSettings, NATIVE_SIDEBAR_CSS } from './native-shell.js'
 
 export const inject = ['sessions', 'uiWorkspace', 'uiConversation', 'slots', 'theme', 'layout']
 
@@ -62,6 +65,8 @@ export function apply(ctx) {
   // style so the shell's own interface returns. `plain` stays false until a Bot-mode
   // view hosts a plain session, which drops only the conversation replacements.
   const surface = createSource({ mode: readMode(), plain: false })
+  const shell = createSource({ integrated: false })
+  let nativeClient = null
   // DSH Agent Session ids from the last pull, so a reload already knows the main
   // view is a plain Session before the team answers.
   let agentSessionCache = new Set()
@@ -325,7 +330,7 @@ export function apply(ctx) {
       key = next
       style.textContent = themeCss(themes[id], accent)
       const release = releaseTokens
-      releaseTokens = ctx.theme.overrideTokens('ds-bot', shellTokens(themes[id]))
+      releaseTokens = shell.getSnapshot().integrated ? null : ctx.theme.overrideTokens('ds-bot', shellTokens(themes[id]))
       if (typeof release === 'function') release()
       if (snapshot.ready) {
         try { localStorage.setItem(PREFS_KEY, JSON.stringify({ theme: prefs.theme, accent: prefs.accent, motion: prefs.motion, layout: prefs.layout, width: prefs.width, flatWidth: prefs.flatWidth, thinking: prefs.thinking })) } catch { /* storage unavailable */ }
@@ -377,10 +382,20 @@ export function apply(ctx) {
   }
   const mainView = () => Object.values(ctx.sessions.list.getSnapshot().byId ?? {}).find(session => (session?.retainedBy?.mainView ?? 0) > 0)?.id
   const show = listedOpener({ list: ctx.sessions.list, refresh: () => Promise.resolve(ctx.sessions.refresh?.()).catch(quietly('refresh sessions')), open: (target) => { expected = target; ctx.uiWorkspace.openSession(target) }, current: mainView })
+  const landing = botLanding({
+    surface, refresh: pull,
+    resolve: (id, last) => {
+      const bot = last ? roster.getSnapshot().byId[last.botId] : undefined
+      return bot && currentPart(bot) !== last.sessionId ? currentPart(bot) : partFor(id)
+    },
+    open: target => { setPlain(false); show(target) },
+  })
+  ctx.effect(() => () => { landing.dispose(); show.cancel() }, 'ds-bot: pending navigation')
   // Bot mode's view must hold a team conversation; an outside Session wears the
   // Bot skin without one. Runs whenever the surface is (or stays) Bot mode —
   // including a cold start, where no setSurface call ever fires.
   const homeToMainBot = () => {
+    if (surface.getSnapshot().mode !== 'bot') return
     const snapshot = roster.getSnapshot()
     if (!snapshot.ready || !snapshot.mainBotId) return
     const main = mainView()
@@ -403,6 +418,12 @@ export function apply(ctx) {
     // The full-pane overlays sit above the conversation, so opening one must dismiss them
     // or the click appears to do nothing.
     isAgentSession: id => isAgentSessionId(id),
+    returnToChat: () => {
+      if (nativeClient) { nativeClient.returnToChat(); return }
+      actions.setSurface('agent')
+      ctx.layout.selectPanel(null)
+      ctx.uiWorkspace.startSession()
+    },
     openSession: (id) => {
       // A DSH Agent Session id lands on the plain surface, not the Bot skin.
       if (isAgentSessionId(id)) return actions.openAgentSession(id)
@@ -469,13 +490,7 @@ export function apply(ctx) {
     },
     // `last` is the Bot conversation the view held before it cleared: when that part
     // was archived for a fresh one, the view goes on in the fresh one.
-    landOn: async (id, last) => {
-      if (last) await pull().catch(() => {})
-      const bot = last ? roster.getSnapshot().byId[last.botId] : undefined
-      setPlain(false)
-      const target = bot && currentPart(bot) !== last.sessionId ? currentPart(bot) : partFor(id)
-      show(target)
-    },
+    landOn: landing.land,
     selectPanel: (id) => { ctx.layout.selectPanel(id) },
     toggleSidebar: () => { ctx.layout.toggleSidebar() },
     // Agent mode hands the surface back to the shell; everything open on the Bot
@@ -489,6 +504,8 @@ export function apply(ctx) {
         return
       }
       if (mode === 'agent') {
+        show.cancel()
+        expected = null
         ui.set(state => ({ ...state, details: null, view: 'details', settings: null, palette: null, newChat: null, menu: null, voice: null, exchange: null, memory: null, toast: null }))
       }
       writeMode(mode)
@@ -588,8 +605,8 @@ export function apply(ctx) {
   // The Voice Input plugin's speech Remote; absent while that plugin is off.
   actions.speech = () => ctx.get('remote.speech') ?? undefined
   // DSH's own settings: models, providers, keys and its plugins.
-  actions.openHarnessSettings = openHarnessSettings
-  actions.openHarnessOnboarding = openHarnessOnboarding
+  actions.openHarnessSettings = () => openNativeSettings(ctx, openHarnessSettings)
+  actions.openHarnessOnboarding = id => openNativeSettings(ctx, () => openHarnessOnboarding(id), id)
   actions.voiceSetup = () => {
     const navigation = ctx.get('pluginNavigation')
     return navigation ? () => navigation.openBundle(VOICE_BUNDLE) : null
@@ -627,7 +644,7 @@ export function apply(ctx) {
   const browserPages = browsers?.pages ?? createSource({})
   const browserTabs = browsers?.tabs ?? createSource({})
   const browserHolds = browsers?.holds ?? createSource({})
-  const face = () => ({ actions, hooks: { roster, ui, activity, work, memoryNews, registry, turnClock, live, cards, heldCards, browserPages, browserTabs, browserHolds, surface, update } })
+  const face = () => ({ actions, hooks: { roster, ui, activity, work, memoryNews, registry, turnClock, live, cards, heldCards, browserPages, browserTabs, browserHolds, surface, update, shell } })
   ctx.effect(() => noticeApprovals({
     work,
     roster,
@@ -788,6 +805,7 @@ export function apply(ctx) {
   const installShell = () => [
     () => installCompiledStyles(SHELL_CSS, 'shell'),
     () => installCompiledStyles(SIDEBAR_CSS, 'sidebar'),
+    ...(shell.getSnapshot().integrated ? [() => installCompiledStyles(NATIVE_SIDEBAR_CSS, 'native-sidebar')] : []),
     () => installCompiledStyles(SECRET_CSS, 'secrets'),
     () => installCompiledStyles(MODEL_CSS + FOLDER_CSS + BOT_SETTINGS_CSS + GROUP_SETTINGS_CSS + AVATAR_LIBRARY_CSS, 'models'),
     () => installCompiledStyles(USAGE_CSS, 'usage'),
@@ -803,13 +821,14 @@ export function apply(ctx) {
     () => installCompiledStyles(BROWSER_CSS, 'browser'),
     () => installTheme(),
     () => shadow('sidebar.workspaces', { priority: BOT_PRIORITY, inject: face }, TeamSidebar),
-    () => shadow('sidebar.brand.mark', { priority: BOT_PRIORITY }, BrandMark),
-    () => shadow('sidebar.brand.name', { priority: BOT_PRIORITY }, BrandName),
-    () => shadow('sidebar.footer.action', { id: 'bot-account', order: -200, inject: face }, FooterAccount),
-    () => shadow('settings.trigger', { priority: BOT_PRIORITY }, YouAvatar),
-    // The whale wins the seat over a shell account plugin's own launcher (the
-    // Desktop's "··· More"), which comes back in Agent mode.
-    () => shadow('settings.launcher', { priority: BOT_PRIORITY, inject: face }, AccountLauncher),
+    ...(shell.getSnapshot().integrated ? [] : [
+      () => shadow('sidebar.brand.mark', { priority: BOT_PRIORITY }, BrandMark),
+      () => shadow('sidebar.brand.name', { priority: BOT_PRIORITY }, BrandName),
+      () => shadow('sidebar.footer.action', { id: 'bot-account', order: -200, inject: face }, FooterAccount),
+      () => shadow('settings.trigger', { priority: BOT_PRIORITY }, YouAvatar),
+      // Standalone DSH keeps its Bot account launcher; Maofuxing owns its account UI.
+      () => shadow('settings.launcher', { priority: BOT_PRIORITY, inject: face }, AccountLauncher),
+    ]),
     () => shadow('shell.overlay', { id: 'bot', order: 50, inject: face }, Overlays),
     () => shadow('shell.overlay', { id: 'bot-signin', order: 55, inject: face }, DeepSeekSignIn),
     () => shadow('shell.overlay', { id: 'bot-toast', order: 60, inject: face }, ErrorToast),
@@ -858,9 +877,11 @@ export function apply(ctx) {
     () => shadow('conversation.input.dock', { id: 'bot-secret', order: -90, inject: face }, SecretDock),
     () => shadow('conversation.input.dock', { id: 'bot-handoff', order: -85, inject: face }, HandoffDock),
   ]
-  // The return button belongs to neither group: it renders only in Agent mode.
-  ctx.effect(() => installCompiledStyles(RETURN_CSS, 'return'), 'ds-bot: return styles')
-  shadow('sidebar.footer.action', { id: 'bot-return', order: -300, inject: face }, BotReturn)
+  ctx.effect(() => installBotEntry(ctx, actions, surface, shell), 'ds-bot: sidebar entry')
+  ctx.effect(() => installNativeShell(ctx, surface, client => {
+    nativeClient = client
+    shell.set({ integrated: client !== null })
+  }), 'ds-bot: native shell')
 
   // The main view decides `plain`: a DSH Agent Session keeps the Bot shell but
   // withdraws the conversation replacements, so the native dsh page shows. A jump
@@ -967,8 +988,10 @@ export function apply(ctx) {
     reconcile()
     if (surface.getSnapshot().mode === 'bot') ensureBotHome()
     const unsub = surface.subscribe(reconcile)
+    const offShell = shell.subscribe(() => { groups.remount('shell', groupsFor(surface.getSnapshot())); reconcile() })
     return () => {
       unsub()
+      offShell()
       clearTimeout(verifyTimer)
       groups.dispose()
     }

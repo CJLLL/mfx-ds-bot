@@ -6,6 +6,13 @@ export const NAMESPACE = 'ds-bot'
 
 const ZH = {
   // Shared
+  Agents: '智能体',
+  'Back to classic Agent': '返回经典 Agent',
+  'Return to chat': '返回聊天',
+  'Agent tools': '智能体设置',
+  'Agent settings': '智能体设置',
+  'Usage statistics': '用量统计',
+  'Lead agent': '主智能体',
   'Main Bot': '主 Bot',
   Working: '工作中',
   'Waiting for your answer': '等你回答',
