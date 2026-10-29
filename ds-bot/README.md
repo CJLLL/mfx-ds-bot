@@ -1,4 +1,4 @@
-# ds-bot
+# mfx-ds-bot
 
 The DS Bot plugin for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (dsh). It turns dsh into a team of long-lived Bots that talk to you, to each other and in group chats. See the [project page](../README.md) for an overview, install steps and screenshots.
 
@@ -35,15 +35,15 @@ Tested with dsh `0.2.1-rc.2` (Web) and `0.2.0-rc.2` (Web and Desktop).
 
 The [project page](../README.md#install) has the full steps for dsh Desktop and dsh Web. In short:
 
-- dsh Desktop: Settings → Plugins → add `ds-bot` (npm), a `.tgz` file, or `github:Fei2411/DS-Bot#v0.1.7&path:/ds-bot`.
-- Command line: `dsh plugin --profile desktop add ds-bot` (or `--profile web`).
+- dsh Desktop: Settings → Plugins → add `mfx-ds-bot@0.2.4` (npm), a `.tgz` file, or `github:CJLLL/mfx-ds-bot#v0.2.4&path:/ds-bot`.
+- Command line: `dsh plugin --profile desktop add mfx-ds-bot@0.2.4` (or `--profile web`).
 
 To work on the plugin from a checkout, add it to a dsh profile as a linked dependency and a bundle:
 
 ```json
 {
-  "dependencies": { "ds-bot": "link:/path/to/ds-bot" },
-  "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "ds-bot"] } }
+  "dependencies": { "mfx-ds-bot": "link:/path/to/ds-bot" },
+  "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "mfx-ds-bot"] } }
 }
 ```
 
@@ -55,7 +55,9 @@ pnpm -s dsh --profile web --no-open
 
 The first time the team opens, the plugin creates a Main Bot called Chief.
 
-**Upgrading from the legacy `dsh-bot` package**: earlier builds used the package name `dsh-bot`. Remove `dsh-bot` from the profile before you add `ds-bot`, because both use the plugin id `bot`. Your team, chats and secrets stay where they are (see [Data and backups](#data-and-backups)); saved browser settings, the theme and Bot colors move over the first time DS Bot opens.
+**Moving from `ds-bot`**: remove the old plugin first (keep its data), restart, then install `mfx-ds-bot`. Both packages use the `bot` and `web-search-auto` row IDs and the same `$DSH_HOME/bot` directory; do not enable both. Keep any custom `bot.config.home` override. A manual profile override containing `name: ds-bot` must become `name: mfx-ds-bot`.
+
+**Upgrading from the legacy `dsh-bot` package**: earlier builds used the package name `dsh-bot`. Remove `dsh-bot` from the profile before you add `mfx-ds-bot@0.2.4`, because both use the plugin id `bot`. Your team, chats and secrets stay where they are (see [Data and backups](#data-and-backups)); saved browser settings, the theme and Bot colors move over the first time DS Bot opens.
 
 ## Configuration
 
@@ -63,7 +65,7 @@ Options go in the profile's `cordis.patch.yml`, under the `bot` entry. All of th
 
 ```yaml
 - id: bot
-  name: ds-bot
+  name: mfx-ds-bot
   config:
     workspace: /path/to/workspace   # where the Bots work; default <home>/workspace
     home: /path/to/bot-data         # where the team is saved; default $DSH_HOME/bot
@@ -114,7 +116,7 @@ A read-only dsh (see [Data and backups](#data-and-backups)) shows memory but can
 
 ## Web search
 
-The package includes a second plugin, `ds-bot/web-search`. It registers the search provider `auto`, and `cordis.patch.yml` makes it the default. Each search goes in this order:
+The package includes a second plugin, `mfx-ds-bot/web-search`. It registers the search provider `auto`, and `cordis.patch.yml` makes it the default. Each search goes in this order:
 
 1. If the profile names another `searchProvider`, that one is used.
 2. The current model route's own search, with that route's key and host. The plugin knows the Anthropic Messages, OpenAI Responses and Gemini protocols, and a few search APIs (Ollama, Kimi, Zhipu, MiMo). Add more with `searchApis`.
@@ -127,7 +129,7 @@ Each result starts with a `Search backend: …` line that names the path it took
 
 ```yaml
 - id: web-search-auto
-  name: ds-bot/web-search
+  name: mfx-ds-bot/web-search
   disabled: true
 - id: web
   name: '@deepseek-ai/dsh-web'

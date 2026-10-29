@@ -159,12 +159,12 @@ test('the menu label follows the shell language without re-registering the entry
   assert.equal(entry.options.label(), 'Agents')
 })
 
-test('the displayed package name is exported in both languages without changing its identity', () => {
+test('the independently published package exports its display name in both languages', () => {
   const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
-  assert.equal(manifest.name, 'ds-bot')
+  assert.equal(manifest.name, 'mfx-ds-bot')
   assert.ok(manifest.files.includes('locale/'))
   for (const language of ['en', 'zh']) {
-    const resource = new URL(import.meta.resolve(`ds-bot/locale/${language}.json`))
+    const resource = new URL(import.meta.resolve(`${manifest.name}/locale/${language}.json`))
     assert.equal(JSON.parse(readFileSync(resource, 'utf8')).meta.title, 'mfx-ds-bot')
   }
 })

@@ -1,7 +1,7 @@
 {
-  "name": "ds-bot",
-  "version": "0.2.3-mfx.4",
-  "description": "DS Bot: a team of long-lived Bots for DeepSeek Harness, with Main Bots, Bot-to-Bot messages and group chats",
+  "name": "mfx-ds-bot",
+  "version": "0.2.4",
+  "description": "Maofuxing agent teams with native navigation, persistent Bots, direct messages and group chats",
   "keywords": [
     "dsh-plugin",
     "deepseek-harness",
@@ -11,13 +11,13 @@
     "multi-agent",
     "agents"
   ],
-  "homepage": "https://github.com/Fei2411/DS-Bot#readme",
+  "homepage": "https://github.com/CJLLL/mfx-ds-bot#readme",
   "bugs": {
-    "url": "https://github.com/Fei2411/DS-Bot/issues"
+    "url": "https://github.com/CJLLL/mfx-ds-bot/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Fei2411/DS-Bot.git",
+    "url": "git+https://github.com/CJLLL/mfx-ds-bot.git",
     "directory": "ds-bot"
   },
   "license": "Apache-2.0",
@@ -39,7 +39,8 @@
     "cordis.patch.yml",
     "locale/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "build": "node scripts/build-client.mjs",

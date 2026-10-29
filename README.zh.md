@@ -1,3 +1,15 @@
+# mfx-ds-bot
+
+基于 [DS Bot](https://github.com/Fei2411/DS-Bot) 的茂福星适配版，保留 Apache-2.0 许可和原作者声明。npm 包名为 **mfx-ds-bot**，源码目录仍为 `ds-bot/`。
+
+在包含智能体导航适配的茂福星客户端中，通过 **插件 → 添加插件**，选择官方 npm 源并填写 `mfx-ds-bot@0.2.4`，安装后完全退出并重新打开客户端，左侧上方即出现 **智能体**。市场搜索还要求当前选择的目录已收录此包；仅发布 npm 不会自动出现在搜索结果中。1024Store 的收录单独提交。
+
+如果已经安装 `ds-bot`，先移除旧插件并保留数据，重启后安装本插件。两者共用 Bot 数据目录和插件行 ID，请勿同时启用。自定义数据目录配置应保留；手写配置中的模块名 `ds-bot` 需改为 `mfx-ds-bot`。
+
+此分支只发布插件。下方独立桌面 App 和安装说明属于上游项目。
+
+---
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.svg">

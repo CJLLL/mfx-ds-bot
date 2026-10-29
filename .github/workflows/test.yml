@@ -55,6 +55,7 @@ jobs:
           SCAN_EXTRA_PATTERNS: ${{ secrets.SCAN_EXTRA_PATTERNS }}
 
   app:
+    if: github.repository == 'Fei2411/DS-Bot'
     name: Desktop app profile
     runs-on: ubuntu-latest
     defaults:
@@ -73,6 +74,7 @@ jobs:
       - run: npm test
 
   app-package:
+    if: github.repository == 'Fei2411/DS-Bot'
     name: Desktop app package (Windows)
     runs-on: windows-latest
     timeout-minutes: 45
